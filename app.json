@@ -41,7 +41,15 @@
       "@clerk/expo",
       "expo-secure-store",
       "expo-build-properties",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "threads-app-clone",
+          "organization": "mesut-nedzhib"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

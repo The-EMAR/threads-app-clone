@@ -1,11 +1,12 @@
-import { ClerkLoaded, ClerkProvider, useAuth } from '@clerk/expo';
+import { ClerkLoaded, ClerkProvider, useAuth, useUser } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import {
-	DMSans_400Regular,
-	DMSans_500Medium,
-	DMSans_700Bold,
-	useFonts,
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_700Bold,
+  useFonts,
 } from '@expo-google-fonts/dm-sans';
+import * as Sentry from '@sentry/react-native';
 import { ConvexReactClient } from 'convex/react';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
@@ -25,6 +26,22 @@ if (!publishableKey) {
 
 LogBox.ignoreLogs(['Clerk: Clerk has been loaded with development keys.']);
 
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  attachScreenshot: true,
+  debug: false,
+  tracesSampleRate: 1.0,
+  _experiments: {
+    profileSampleRate: 1.0,
+    replaysSessionSampleRate: 1.0,
+    replaysOnErrorSampleRate: 1.0,
+  },
+
+  sendDefaultPii: true,
+  enableLogs: true,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+});
+
 SplashScreen.preventAutoHideAsync();
 
 const InitialLayout = () => {
@@ -37,6 +54,7 @@ const InitialLayout = () => {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const user = useUser();
 
   // 1. Менажиране на Splash Screen (Крие се само когато И шрифтовете, И Clerk са готови)
   useEffect(() => {
@@ -62,6 +80,17 @@ const InitialLayout = () => {
     }
   }, [isLoaded, fontsLoaded, isSignedIn, segments]);
 
+  useEffect(()=>{
+    if(user && user.user) {
+      Sentry.setUser({
+        email: user.user.emailAddresses[0]?.emailAddress,
+        id: user.user.id,
+      })
+    } else {
+      Sentry.setUser(null);
+    }
+  },[user])
+
   // Докато трае първоначалното зареждане, не рендерираме нищо (Splash-а се вижда)
   if (!fontsLoaded || !isLoaded) {
     return null;
@@ -76,7 +105,7 @@ const InitialLayout = () => {
   );
 };
 
-export default function RootLayout() {
+const RootLayout = () => {
   const colorScheme = useColorScheme();
 
   return (
@@ -91,3 +120,5 @@ export default function RootLayout() {
     </ClerkProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);
