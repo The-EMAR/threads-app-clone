@@ -2,7 +2,7 @@ import { Colors } from "@/constants/Colors";
 import { useAuth } from "@clerk/expo";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs, useRouter } from "expo-router";
-import { ColorValue, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ColorValue, StyleSheet, View } from "react-native";
 
 const CreateTabIcon = ({ color, size }: { color: ColorValue, size: number }) => {
 	return (
@@ -39,6 +39,7 @@ const Layout = () => {
 					title: 'Search',
 					tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'search' : 'search-outline'} color={color} size={size} />
 				}} />
+
 			<Tabs.Screen name="create" options={{
 				title: 'Create',
 				tabBarIcon: ({ color, size, focused }) => (
@@ -61,14 +62,8 @@ const Layout = () => {
 
 			<Tabs.Screen name="profile" options={{
 				title: 'Profile',
+				headerShown: false,
 				tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'person' : 'person-outline'} color={color} size={size} />,
-				headerRight: () => {
-					return (
-						<TouchableOpacity onPress={() => signOut()}>
-							<Ionicons name="log-out" size={24} />
-						</TouchableOpacity>
-					)
-				}
 			}} />
 		</Tabs>
 	);
