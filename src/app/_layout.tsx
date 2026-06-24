@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/react-native';
 import { ConvexReactClient } from 'convex/react';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
+import { createNavigationContainerRef } from 'expo-router/build/react-navigation';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { LogBox, useColorScheme } from 'react-native';
@@ -25,6 +26,10 @@ if (!publishableKey) {
 }
 
 LogBox.ignoreLogs(['Clerk: Clerk has been loaded with development keys.']);
+
+const routingInstrumentation = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: true,
+});
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -107,6 +112,11 @@ const InitialLayout = () => {
 
 const RootLayout = () => {
   const colorScheme = useColorScheme();
+  const ref = createNavigationContainerRef();
+
+  useEffect(()=>{
+    routingInstrumentation.registerNavigationContainer(ref);
+  },[ref])
 
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>

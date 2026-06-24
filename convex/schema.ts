@@ -16,7 +16,7 @@ export default defineSchema({
       followersCount: v.number(),
       pushToken: v.optional(v.string()),
     })
-  ),
+  ).index('byClerkId',['clerkId']),
 	messages: defineTable(
 		v.object({
 			userId: v.id('users'),

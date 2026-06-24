@@ -3,7 +3,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useAuth } from '@clerk/expo';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Id } from '../../convex/_generated/dataModel';
 import Tabs from './Tabs';
@@ -31,7 +31,7 @@ const Profile = ({ userId, showBackButton = false }: ProfileProps) => {
           <>
             <View style={styles.header}>
               {showBackButton ? (
-                <TouchableOpacity style={styles.backButton} onPress={()=>router.back()}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                   <Ionicons name="chevron-back" size={24} color="black" />
                   <Text>Back</Text>
                 </TouchableOpacity>
@@ -47,8 +47,15 @@ const Profile = ({ userId, showBackButton = false }: ProfileProps) => {
               </View>
             </View>
 
-            {userId ? <UserProfile userId={userId} /> : <UserProfile userId={userProfile?._id} />}
-            <Tabs onTabChange={()=>{}} />
+            {userId ? (
+              <UserProfile userId={userId} />
+            ) : userProfile?._id ? (
+              <UserProfile userId={userProfile?._id} />
+            ) : (
+              <ActivityIndicator size="small" />
+            )}
+
+            <Tabs onTabChange={() => { }} />
           </>
         }
       />
