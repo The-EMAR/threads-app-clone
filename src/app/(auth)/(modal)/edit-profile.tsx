@@ -1,6 +1,10 @@
 import { Colors } from '@/constants/Colors';
 import { useMutation } from 'convex/react';
+import { File } from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
+import { ImagePickerAsset } from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { fetch } from 'expo/fetch';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { api } from '../../../../convex/_generated/api';
@@ -13,40 +17,92 @@ const Page = () => {
     userId: string;
     imageUrl: string;
   }>();
-  
+
   const [bio, setBio] = useState(biostring);
   const [link, setLink] = useState(linkstring);
   const updateUser = useMutation(api.users.updateUser);
+  const generateUploadUrl = useMutation(api.users.generateUploadUrl);
 
   const router = useRouter();
+  const [selectedImage, setSelectedImage] = useState<ImagePickerAsset | null>();
 
-  const onDone = async() => {
-    await updateUser({
+  const onDone = async () => {
+    let storageId = null;
+
+    if (selectedImage) {
+      storageId = await updateProfilePicture();
+    }
+    
+    const toUpdate: any = {
       _id: userId as Id<"users">,
       bio,
       websiteUrl: link,
-    })
+    }
+
+    if (storageId) {
+      toUpdate.imageUrl = storageId;
+    }
+
+    await updateUser(toUpdate);
 
     router.dismiss();
   }
 
+  const updateProfilePicture = async () => {
+    const uploadUrl = await generateUploadUrl();
+
+    if (!selectedImage?.uri) return null;
+
+    const imageFile = new File(selectedImage.uri);
+
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: imageFile,
+      headers: {
+        'Content-Type': selectedImage.mimeType || 'image/jpeg',
+      },
+    });
+    
+    const { storageId } = await response.json();
+    
+    return storageId;
+  }
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+    }      
+  }
+
   return (
     <View>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
-          headerRight: ()=>(
-            <TouchableOpacity onPress={()=>onDone()}>
+          headerRight: () => (
+            <TouchableOpacity onPress={() => onDone()}>
               <Text>Done</Text>
             </TouchableOpacity>
           ),
         }}
       />
 
-      <Image source={{ uri: imageUrl }} style={styles.image} />
+      <TouchableOpacity onPress={() => pickImage()}>
+        {selectedImage ? (
+          <Image source={{ uri: selectedImage.uri }} style={styles.image} />
+        ) : (
+          <Image source={{ uri: imageUrl }} style={styles.image} />
+        )}
+      </TouchableOpacity>
 
       <View style={styles.section}>
         <Text style={styles.label}>Bio</Text>
-        <TextInput 
+        <TextInput
           value={bio}
           onChangeText={setBio}
           style={styles.bioInput}
@@ -59,7 +115,7 @@ const Page = () => {
 
       <View style={styles.section}>
         <Text style={styles.label}>Link</Text>
-        <TextInput 
+        <TextInput
           value={link}
           onChangeText={setLink}
           placeholder='https://www.example.com'
