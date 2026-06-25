@@ -22,7 +22,9 @@ const UserProfile = ({ userId }: UserProfileProps) => {
           <Text style={styles.name}>{profile?.first_name} {profile?.last_name}</Text>
           <Text style={styles.username}>@{profile?.username}</Text>
         </View>
-        <Image source={{ uri: profile?.imageUrl }} style={styles.image} />
+        {profile?.imageUrl && (
+          <Image source={{ uri: profile?.imageUrl }} style={styles.image} />
+        )}
       </View>
 
       <Text style={styles.bio}>{profile?.bio || "No Bio"}</Text>
