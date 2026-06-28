@@ -2,10 +2,10 @@ import Thread from '@/components/Thread';
 import ThreadComposer from '@/components/ThreadComposer';
 import { Colors } from '@/constants/Colors';
 import { usePaginatedQuery } from 'convex/react';
-import { useIsFocused, useNavigation } from 'expo-router';
+import { Link, useIsFocused, useNavigation } from 'expo-router';
 import { useBottomTabBarHeight } from 'expo-router/build/react-navigation/bottom-tabs';
 import { useState } from 'react';
-import { Image, RefreshControl, StyleSheet, View } from 'react-native';
+import { Image, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { runOnJS } from 'react-native-worklets';
@@ -73,7 +73,13 @@ const Page = () => {
       scrollEventThrottle={16}
       data={results}
       showsVerticalScrollIndicator={false}
-      renderItem={({ item }) => <Thread thread={item as Doc<'messages'> & { creator: Doc<'users'> }} />}
+      renderItem={({ item }) => (
+       <Link href={`/(auth)/(tabs)/feed/${item._id}`} asChild>
+        <TouchableOpacity>
+          <Thread thread={item as Doc<'messages'> & { creator: Doc<'users'> }} />
+        </TouchableOpacity>
+       </Link>
+      )}
       keyExtractor={(item) => item._id}
       onEndReached={onLoadMore}
       onEndReachedThreshold={0.5}

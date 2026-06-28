@@ -106,6 +106,26 @@ export const likeThread = mutation({
       likeCount: (message?.likeCount || 0) + 1,
     });
   }
+});
+
+export const getThreadById = query({
+  args: {
+    messageId: v.id('messages'),
+  },
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.messageId);
+
+    if(!thread) return null;
+
+    const creator = await getMessageCreator(ctx, thread.userId);
+    const mediaUrls = await getMeidaUrls(ctx, thread.mediaFiles);
+
+    return {
+      ...thread,
+      creator,
+      mediaFiles: mediaUrls,
+    }
+  }
 })
 
 export const generateUploadUrl = mutation({

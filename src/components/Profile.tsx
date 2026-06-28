@@ -3,7 +3,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useAuth } from '@clerk/expo';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePaginatedQuery } from 'convex/react';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../convex/_generated/api';
@@ -35,7 +35,13 @@ const Profile = ({ userId, showBackButton = false }: ProfileProps) => {
     <View style={[styles.container, { paddingTop: top }]}>
       <FlatList
         data={results}
-        renderItem={({ item }) => <Thread thread={item as Doc<'messages'> & { creator: Doc<'users'> }} />}
+        renderItem={({ item }) => (
+          <Link href={`/(auth)/(tabs)/feed/${item._id}`} asChild>
+            <TouchableOpacity>
+              <Thread thread={item as Doc<'messages'> & { creator: Doc<'users'> }} />
+            </TouchableOpacity>
+          </Link>
+        )}
         ListEmptyComponent={<Text style={styles.tabContentText}>You haven't posted anything yet.</Text>}
         ItemSeparatorComponent={() => <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: Colors.border }} />}
         ListHeaderComponent={
