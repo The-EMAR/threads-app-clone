@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import { useMutation } from 'convex/react'
+import { Link } from 'expo-router'
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { api } from '../../convex/_generated/api'
 import { Doc } from '../../convex/_generated/dataModel'
@@ -32,17 +33,21 @@ const Thread = ({ thread }: ThreadProps) => {
         <Text style={styles.content}>{content}</Text>
         {mediaFiles && mediaFiles.length > 0 && (
           <ScrollView
-           horizontal
-           showsHorizontalScrollIndicator={false}
-           contentContainerStyle={styles.mediaContainer}
-           >
-            {mediaFiles.map((imageUrl, index) => 
-              <Image key={index} source={{ uri: imageUrl }} style={styles.mediaImage} />
-            )}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.mediaContainer}
+          >
+            {mediaFiles.map((imageUrl, index) => (
+              <Link href={`/(auth)/(modal)/image/${encodeURIComponent(imageUrl)}`} key={index} asChild>
+                <TouchableOpacity>
+                  <Image source={{ uri: imageUrl }} style={styles.mediaImage} />
+                </TouchableOpacity>
+              </Link>
+            ))}
           </ScrollView>
         )}
         <View style={styles.actions}>
-          <TouchableOpacity onPress={()=>likeThread({ threadId: thread._id })} style={styles.actionButton}>
+          <TouchableOpacity onPress={() => likeThread({ threadId: thread._id })} style={styles.actionButton}>
             <Ionicons name="heart-outline" size={24} color="black" />
             <Text style={styles.actionText}>{likeCount}</Text>
           </TouchableOpacity>
@@ -120,7 +125,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 10,
-    marginBottom:10, 
+    marginBottom: 10,
   },
   mediaContainer: {
     paddingRight: 10,

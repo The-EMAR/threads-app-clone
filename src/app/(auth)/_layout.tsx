@@ -43,6 +43,30 @@ const Layout = () => {
 					}
 				}}
 			/>
+
+			<Stack.Screen name="(modal)/image/[url]"
+				options={{
+					presentation: 'fullScreenModal',
+					title: '',
+					headerStyle: {
+						backgroundColor: 'black'
+					},
+					headerLeft: () => {
+						return (
+							<TouchableOpacity onPress={()=>router.dismiss()}>
+								<Ionicons name="close" size={24} color="white" />
+							</TouchableOpacity>
+						)
+					},
+					headerRight: () => {
+						return (
+							<TouchableOpacity onPress={()=>router.dismiss()}>
+								<Ionicons name="ellipsis-horizontal-circle" size={24} color="white" />
+							</TouchableOpacity>
+						)
+					}
+				}}
+			/>
 		</Stack>
 	)
 }
