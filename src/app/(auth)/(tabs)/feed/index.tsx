@@ -1,30 +1,97 @@
-import * as Sentry from '@sentry/react-native';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import Thread from '@/components/Thread';
+import ThreadComposer from '@/components/ThreadComposer';
+import { Colors } from '@/constants/Colors';
+import { usePaginatedQuery } from 'convex/react';
+import { useIsFocused, useNavigation } from 'expo-router';
+import { useBottomTabBarHeight } from 'expo-router/build/react-navigation/bottom-tabs';
+import { useState } from 'react';
+import { Image, RefreshControl, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { runOnJS } from 'react-native-worklets';
+import { api } from '../../../../../convex/_generated/api';
+import { Doc } from '../../../../../convex/_generated/dataModel';
 
 const Page = () => {
-  const testError = () => {
-    try {
-      throw new Error('test error');
-    }catch (error) {
-      const sentryID = Sentry.captureMessage('We have a problem');
-      // console.log('Sebtry ID', sentryID);
+  const [refreshing, setRefreshing] = useState(false);
+  const { top } = useSafeAreaInsets();
 
-      const userFeedback = {
-        associatedEventId: sentryID,
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        message: 'This was not so cool'
-      }
+  // Animation
+  const navigation = useNavigation();
+  const scrollOffset = useSharedValue(0);
+  const tabBarHeight = useBottomTabBarHeight();
+  const isFocused = useIsFocused();
 
-      Sentry.captureFeedback(userFeedback);
+  const updateTabBar = () => {
+    let newMarginBottom = 0;
+    if (scrollOffset.value >= 0 && scrollOffset.value <= tabBarHeight) {
+      newMarginBottom = -scrollOffset.value;
+    } else if (scrollOffset.value > tabBarHeight) {
+      newMarginBottom = -tabBarHeight;
     }
+
+    navigation.getParent()?.setOptions({
+      tabBarStyle: {
+        marginBottom: newMarginBottom,
+      }
+    })
+  };
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      if (isFocused) {
+        scrollOffset.value = event.contentOffset.y;
+        runOnJS(updateTabBar)();
+      }
+    }
+  });
+
+
+  const { results, status, loadMore } = usePaginatedQuery(
+    api.messages.getThreads,
+    {},
+    {
+      initialNumItems: 5,
+    }
+  )
+
+  const onLoadMore = () => {
+    loadMore(5);
+  }
+
+  const onReresh = () => {
+    setRefreshing(true);
+
+    setTimeout(() => {
+      setRefreshing(false)
+    }, 2000);
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>This is feed</Text>
-      <Button title='Try!' onPress={testError}/>
-    </View>
+    <Animated.FlatList
+      onScroll={scrollHandler}
+      scrollEventThrottle={16}
+      data={results}
+      showsVerticalScrollIndicator={false}
+      renderItem={({ item }) => <Thread thread={item as Doc<'messages'> & { creator: Doc<'users'> }} />}
+      keyExtractor={(item) => item._id}
+      onEndReached={onLoadMore}
+      onEndReachedThreshold={0.5}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onReresh} />}
+      ItemSeparatorComponent={() => (
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: Colors.border }} />
+      )}
+      contentContainerStyle={{ paddingVertical: top }}
+      ListHeaderComponent={
+        <View style={{ paddingBottom: 16 }}>
+          <Image
+            source={require('@/assets/images/threads-logo-black.png')}
+            style={{ width: 40, height: 40, alignSelf: 'center' }}
+          />
+          <ThreadComposer isPreview />
+        </View>
+      }
+    />
   )
 }
 
