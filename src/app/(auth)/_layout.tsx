@@ -36,7 +36,7 @@ const Layout = () => {
 					title: 'Edit Profile',
 					headerLeft: () => {
 						return (
-							<TouchableOpacity onPress={()=>router.dismiss()}>
+							<TouchableOpacity onPress={() => router.dismiss()}>
 								<Text>Cancel</Text>
 							</TouchableOpacity>
 						)
@@ -53,15 +53,29 @@ const Layout = () => {
 					},
 					headerLeft: () => {
 						return (
-							<TouchableOpacity onPress={()=>router.dismiss()}>
+							<TouchableOpacity onPress={() => router.dismiss()}>
 								<Ionicons name="close" size={24} color="white" />
 							</TouchableOpacity>
 						)
 					},
 					headerRight: () => {
 						return (
-							<TouchableOpacity onPress={()=>router.dismiss()}>
+							<TouchableOpacity onPress={() => router.dismiss()}>
 								<Ionicons name="ellipsis-horizontal-circle" size={24} color="white" />
+							</TouchableOpacity>
+						)
+					}
+				}}
+			/>
+
+			<Stack.Screen name="(modal)/reply/[id]"
+				options={{
+					presentation: 'modal',
+					title: 'Reply',
+					headerLeft: () => {
+						return (
+							<TouchableOpacity onPress={() => router.dismiss()}>
+								<Text>Cancel</Text>
 							</TouchableOpacity>
 						)
 					}

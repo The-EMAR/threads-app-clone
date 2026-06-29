@@ -14,13 +14,22 @@ export const addThreadMessage = mutation({
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
 
-    return await ctx.db.insert('messages', {
+    const message = await ctx.db.insert('messages', {
       ...args,
       userId: user._id,
       likeCount: 0,
       commentCount: 0,
       retweetCount: 0,
     });
+
+    if (args.threadId) {
+      const originalThread = await ctx.db.get(args.threadId);
+      await ctx.db.patch(args.threadId, {
+        commentCount: (originalThread?.commentCount || 0) + 1,
+      })
+    }
+
+    return message;
   }
 });
 
@@ -44,7 +53,7 @@ export const getThreads = query({
     }
 
     const messagesWithCreator = await Promise.all(
-      threads.page.map(async (thread)=>{
+      threads.page.map(async (thread) => {
         const creator = await getMessageCreator(ctx, thread.userId);
         const mediaUrls = await getMeidaUrls(ctx, thread.mediaFiles);
 
@@ -78,12 +87,12 @@ const getMessageCreator = async (ctx: QueryCtx, userId: Id<'users'>) => {
   }
 };
 
-const getMeidaUrls = async(ctx: QueryCtx, mediaFiles: string[] | undefined) => {
+const getMeidaUrls = async (ctx: QueryCtx, mediaFiles: string[] | undefined) => {
   if (!mediaFiles || mediaFiles.length === 0) {
     return [];
   }
 
-  return await Promise.all(mediaFiles.map(async(file)=>{
+  return await Promise.all(mediaFiles.map(async (file) => {
     let url: any = file;
     if (!file.startsWith('https')) {
       url = await ctx.storage.getUrl(file as Id<'_storage'>);
@@ -115,7 +124,7 @@ export const getThreadById = query({
   handler: async (ctx, args) => {
     const thread = await ctx.db.get(args.messageId);
 
-    if(!thread) return null;
+    if (!thread) return null;
 
     const creator = await getMessageCreator(ctx, thread.userId);
     const mediaUrls = await getMeidaUrls(ctx, thread.mediaFiles);
@@ -126,7 +135,35 @@ export const getThreadById = query({
       mediaFiles: mediaUrls,
     }
   }
-})
+});
+
+export const getThreadByComments = query({
+  args: {
+    messageId: v.id('messages'),
+  },
+  handler: async (ctx, args) => {
+    const comments = await ctx.db
+      .query('messages')
+      .filter((q) => q.eq(q.field('threadId'), args.messageId))
+      .order('desc')
+      .collect();
+
+    const messagesWithCreator = await Promise.all(
+      comments.map(async(comment)=>{
+        const creator = await getMessageCreator(ctx,comment.userId);
+        const mediaUrls = await getMeidaUrls(ctx, comment.mediaFiles);
+
+        return {
+          ...comment,
+          creator,
+          mediaFiles: mediaUrls,
+        }
+      })
+    )
+
+    return messagesWithCreator;
+  }
+});
 
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
